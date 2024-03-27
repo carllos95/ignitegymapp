@@ -1,4 +1,4 @@
-import { Center, Image, Text, VStack, Heading, ScrollView } from "native-base";
+import { Center, Image, Text, VStack, Heading, ScrollView, useToast } from "native-base";
 import BackgroundImg from '@assets/background.png'
 import LogoSvg from '@assets/logo.svg'
 import { Input } from "@components/Input";
@@ -7,6 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form";
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { api } from "@services/api";
+import axios from "axios";
+import { AppError } from "@utils/AppError";
 
 type FormDataProps = {
   name: string,
@@ -27,14 +30,45 @@ export function SignUp() {
     resolver: yupResolver(signUpSchema)
   })
 
+  const toast = useToast()
   const navigation = useNavigation()
 
   function handleGoBack() {
     navigation.goBack()
   }
 
-  function handleSignUp({ name, email, password, password_confirm }: FormDataProps) {
+  async function handleSignUp({ name, email, password }: FormDataProps) {
 
+    try {
+      const response = await api.post('/users', {
+        name, email, password
+      })
+      console.log(response)
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      console.log(error)
+
+      toast.show({
+        title: isAppError ? error.message : "Não foi possível criar a conta. Tente novamente mais tarde.",
+        placement: 'top',
+        bgColor: 'red.500'
+      })
+    }
+
+
+    // const response = await fetch('http://192.168.1.2:3333/users', {
+    //   method: 'post',
+    //   headers: {
+    //     "Accept": 'application/json',
+    //     "Content-Type": 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     name, email, password
+    //   })
+    // })
+
+    // const data = await response.json()
+    // console.log(data)
   }
 
   return (

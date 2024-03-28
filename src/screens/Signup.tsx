@@ -10,6 +10,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { api } from "@services/api";
 import axios from "axios";
 import { AppError } from "@utils/AppError";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type FormDataProps = {
   name: string,
@@ -26,11 +28,16 @@ const signUpSchema = yup.object({
 })
 
 export function SignUp() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const { signIn } = useAuth()
+
+  const toast = useToast()
+
   const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps>({
     resolver: yupResolver(signUpSchema)
   })
 
-  const toast = useToast()
   const navigation = useNavigation()
 
   function handleGoBack() {
@@ -40,13 +47,16 @@ export function SignUp() {
   async function handleSignUp({ name, email, password }: FormDataProps) {
 
     try {
-      const response = await api.post('/users', {
+      setIsLoading(true)
+      await api.post('/users', {
         name, email, password
       })
-      console.log(response)
+
+      await signIn(email, password)
+
     } catch (error) {
+      setIsLoading(false)
       const isAppError = error instanceof AppError
-      console.log(error)
 
       toast.show({
         title: isAppError ? error.message : "Não foi possível criar a conta. Tente novamente mais tarde.",
@@ -54,21 +64,6 @@ export function SignUp() {
         bgColor: 'red.500'
       })
     }
-
-
-    // const response = await fetch('http://192.168.1.2:3333/users', {
-    //   method: 'post',
-    //   headers: {
-    //     "Accept": 'application/json',
-    //     "Content-Type": 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     name, email, password
-    //   })
-    // })
-
-    // const data = await response.json()
-    // console.log(data)
   }
 
   return (
@@ -160,6 +155,7 @@ export function SignUp() {
           <Button
             title='Criar e acessar'
             onPress={handleSubmit(handleSignUp)}
+            isLoading={isLoading}
           />
         </Center>
         <Button
